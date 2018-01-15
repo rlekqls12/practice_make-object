@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> math </title>
+		<script>
+			window.onload = function() {
+				var count = 0;
+				for (var y = 0; y < 10; y++) {
+					for (var x = 0; x < 10; x++) {
+						eval("var obj"+x+"i"+y+" = new crt(50, 50);");
+						if((x%2==0 && y%2==0) || (x%2!=0 && y%2!=0))
+							eval("obj"+x+"i"+y+".setColor('gray');");
+						else
+							eval("obj"+x+"i"+y+".setColor('darkgray');");
+						eval("obj"+x+"i"+y+".setPos(x*50, y*50);");
+						eval("obj"+x+"i"+y+".addParent(document.body);");
+						//eval("obj"+x+"i"+y+".print();");
+					}
+				}
+
+				function crt(wd, hg) {
+					this.obj = document.createElement('img');
+					this.obj.src = '';
+					this.obj.width = wd;
+					this.obj.height = hg;
+
+					this.obj.onmouseover = function() {
+						co = this.style.cssText;
+						this.style.cssText += 'background: #00ffff;';
+					}
+
+					this.obj.onmouseout = function() {
+						this.style.cssText = co;
+					}
+
+					this.setColor = function(color) {
+						this.obj.style.cssText += 'background: ' + color + '; position: absolute;';
+					}
+					
+					this.setPos = function(x, y) {
+						this.obj.style.left = x + 'px';
+						this.obj.style.top = y + 'px';
+					}
+					
+					this.setSize = function(wd, hg) {
+						this.obj.width = wd;
+						this.obj.height = hg;
+					}
+
+					this.addParent = function(parent) {
+						parent.appendChild(this.obj);
+					}
+
+					this.removeParent = function(parent) {
+						parent.removeChild(this.obj);
+					}
+
+					this.print = function() {
+						console.log(this.obj);
+					}
+				}
+
+				function hitTest(ori, tar) {
+					var oriX, oriY, oriW, oriH, tarX, tarY, tarW, tarH, valTB = 0, valLR = 0;
+					oriX = Number((ori.style.left).replace('px',''));
+					oriY = Number((ori.style.top).replace('px',''));
+					oriW = ori.width;
+					oriH = ori.height;
+					tarX = Number((tar.style.left).replace('px',''));
+					tarY = Number((tar.style.top).replace('px',''));
+					tarW = tar.width;
+					tarH = tar.height;
+
+					if ((oriY >= tarY + hitT && oriY <= tarY + (tarH - hitT)) || (oriY + oriH >= tarY + hitT && oriY + oriH <= tarY + (tarH - hitT))) {
+						if (oriX + oriW >= tarX && oriX + oriW <= tarX + hitT)
+							valLR = 1;
+						else if (oriX >= tarX + (tarW - hitT) && oriX <= tarX + tarW)
+							valLR = 2;
+					}
+					if ((oriX >= tarX + hitT && oriX <= tarX + (tarW - hitT)) || (oriX + oriW >= tarX + hitT && oriX + oriW <= tarX + (tarW - hitT))) {
+						if (oriY + oriH >= tarY && oriY + oriH <= tarY + hitT)
+							valTB = 1;
+						else if (oriY >= tarY + (tarH - hitT) && oriY <= tarY + tarH)
+							valTB = 2;
+					}
+					return valLR + "/" + valTB;
+				}
+			}
+		</script>
+	</head>
+	<body>
+	</body>
+</html>
