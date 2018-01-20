@@ -4,8 +4,7 @@
 		<title> math </title>
 		<script>
 			window.onload = function() {
-				var math_gravity = new Array();
-				/*var count = 0;
+				var count = 0;
 				for (var y = 0; y < 10; y++) {
 					for (var x = 0; x < 10; x++) {
 						eval("var obj"+x+"i"+y+" = new crt(50, 50);");
@@ -17,25 +16,25 @@
 						eval("obj"+x+"i"+y+".addParent(document.body);");
 						//eval("obj"+x+"i"+y+".print();");
 					}
-				}*/
-				var obj0 = new crt(50, 50, 50, 'obj0');
-				obj0.setColor('gray');
-				obj0.setPos(0,0);
-				obj0.setGravity(true);
-				obj0.addParent(document.body);
+				}
 
-				function crt(wd, hg, wt, id) {
+				function crt(wd, hg) {
 					this.obj = document.createElement('img');
 					this.obj.src = '';
 					this.obj.width = wd;
 					this.obj.height = hg;
-					this.obj.style.cssText += 'position: absolute;';
-					this.obj.id = id;
-					this.gravity = false;
-					this.weight = wt;
+
+					this.obj.onmouseover = function() {
+						co = this.style.cssText;
+						this.style.cssText += 'background: #00ffff;';
+					}
+
+					this.obj.onmouseout = function() {
+						this.style.cssText = co;
+					}
 
 					this.setColor = function(color) {
-						this.obj.style.cssText += 'background: ' + color + ';';
+						this.obj.style.cssText += 'background: ' + color + '; position: absolute;';
 					}
 					
 					this.setPos = function(x, y) {
@@ -46,12 +45,6 @@
 					this.setSize = function(wd, hg) {
 						this.obj.width = wd;
 						this.obj.height = hg;
-					}
-
-					this.setGravity = function(gra) {
-						this.gravity = gra;
-						math_gravity.push(this.obj.id);
-						console.log(math_gravity);
 					}
 
 					this.addParent = function(parent) {
@@ -66,10 +59,6 @@
 						console.log(this.obj);
 					}
 				}
-
-				setInterval(function() {
-					//math_gravity 검사 후 eval 이용해서 중력 주기
-				}, 1000/60);
 
 				function hitTest(ori, tar) {
 					var oriX, oriY, oriW, oriH, tarX, tarY, tarW, tarH, valTB = 0, valLR = 0;
