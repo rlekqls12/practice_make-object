@@ -4,27 +4,32 @@
 		<title> math </title>
 		<script>
 			window.onload = function() {
-				var math_gravity = new Array();
-				/*var count = 0;
-				for (var y = 0; y < 10; y++) {
-					for (var x = 0; x < 10; x++) {
-						eval("var obj"+x+"i"+y+" = new crt(50, 50);");
-						if((x%2==0 && y%2==0) || (x%2!=0 && y%2!=0))
-							eval("obj"+x+"i"+y+".setColor('gray');");
-						else
-							eval("obj"+x+"i"+y+".setColor('darkgray');");
-						eval("obj"+x+"i"+y+".setPos(x*50, y*50);");
-						eval("obj"+x+"i"+y+".addParent(document.body);");
-						//eval("obj"+x+"i"+y+".print();");
-					}
-				}*/
-				var obj0 = new crt(50, 50, 50, 'obj0');
+				var math_hit = new Array(), math_gravity = new Array(), objs = new Array(), num = 0;
+
+				math_hit.push(new Array(0, 500, 500, 50));
+
+				var obj0 = new crt(50, 50, 50, 0.6, 'obj0');
 				obj0.setColor('gray');
+				obj0.setAlpha(0.5);
 				obj0.setPos(0,0);
 				obj0.setGravity(true);
+				obj0.setHit(true);
 				obj0.addParent(document.body);
 
-				function crt(wd, hg, wt, id) {
+				window.onmousedown = makeNewObj;
+
+				function makeNewObj() {
+					objs[num] = new crt(50, 50, 50, 0.6, 'objs['+num+']');
+					objs[num].setColor('#' + Math.floor((Math.random()*899999 + 100000)));
+					objs[num].setAlpha(0.5);
+					objs[num].setPos(event.pageX, event.pageY);
+					objs[num].setGravity(true);
+					objs[num].setHit(true);
+					objs[num].addParent(document.body);
+					num++;
+				}
+
+				function crt(wd, hg, wt, bnd, id) {
 					this.obj = document.createElement('img');
 					this.obj.src = '';
 					this.obj.width = wd;
@@ -32,26 +37,104 @@
 					this.obj.style.cssText += 'position: absolute;';
 					this.obj.id = id;
 					this.gravity = false;
+					this.bound = bnd;
 					this.weight = wt;
+					this.powY = 0;
+					this.hit = false;
 
 					this.setColor = function(color) {
 						this.obj.style.cssText += 'background: ' + color + ';';
 					}
-					
-					this.setPos = function(x, y) {
-						this.obj.style.left = x + 'px';
-						this.obj.style.top = y + 'px';
+
+					this.getColor = function() {
+						return this.obj.style.backgroundColor;
+					}
+
+					this.setAlpha = function(alpha) {
+						this.obj.style.cssText += 'opacity: ' + alpha + ';';
+					}
+
+					this.getAlpha = function() {
+						return this.obj.style.opacity;
 					}
 					
+					this.setPos = function(x, y) {
+						if (x != null || x != undefined)
+							this.obj.style.left = x + 'px';
+						if (y != null || y != undefined)
+							this.obj.style.top = y + 'px';
+					}
+					
+					this.addPos = function(x, y) {
+						if (x != null || x != undefined)
+							this.obj.style.left = parseInt(this.obj.style.left) + x + 'px';
+						if (y != null || y != undefined)
+							this.obj.style.top = parseInt(this.obj.style.top) + y + 'px';
+					}
+					
+					this.getPos = function(x, y) {
+						var returnValue = "";
+						if (x == 1)
+							returnValue += this.obj.style.left.replace("px", "");
+						if (y == 1) {
+							if (x == 1)
+								returnValue += "/";
+							returnValue += this.obj.style.top.replace("px", "");
+						}
+						return returnValue;
+					}
+
 					this.setSize = function(wd, hg) {
 						this.obj.width = wd;
 						this.obj.height = hg;
 					}
 
+					this.getSize = function(wd, hg) {
+						var returnValue = "";
+						if (wd == 1)
+							returnValue += this.obj.width;
+						if (hg == 1) {
+							if (wd == 1)
+								returnValue += "/";
+							returnValue += this.obj.height;
+						}
+						return returnValue;
+					}
+
 					this.setGravity = function(gra) {
 						this.gravity = gra;
-						math_gravity.push(this.obj.id);
-						console.log(math_gravity);
+						if (gra == true)
+							math_gravity.push(this.obj.id);
+						else {
+							for (var i = 0; i < math_gravity.length; i++) {
+								if (math_gravity[i] == this.obj.id) {
+									math_gravity.splice(i,1);
+									return;
+								}
+							}
+						}
+					}
+
+					this.getGravity = function() {
+						return this.gravity;
+					}
+
+					this.setHit = function(ht) {
+						this.hit = ht;
+						if (ht == true)
+							math_hit.push(this.obj.id);
+						else {
+							for (var i = 0; i < math_hit.length; i++) {
+								if (math_hit[i] == this.obj.id) {
+									math_hit.splice(i,1);
+									return;
+								}
+							}
+						}
+					}
+
+					this.getHit = function() {
+						return this.hit;
 					}
 
 					this.addParent = function(parent) {
@@ -67,9 +150,31 @@
 					}
 				}
 
+				function jump() {
+					for (var chkGra = 0; chkGra < math_gravity.length; chkGra++) {
+						eval("var chkObj = " + math_gravity[chkGra] + ";");
+						if (chkObj != null && chkObj.getGravity() == true) {
+							chkObj.powY += Math.sqrt(chkObj.weight);
+							chkObj.addPos(null, chkObj.powY);
+							if (chkObj.getPos(0, 1) >= 450) {
+								chkObj.powY *= (-1 + (Math.sqrt(chkObj.weight) / (chkObj.weight))) * chkObj.bound;
+								chkObj.setPos(null, 450);
+							}
+						}
+				}
+
+				function hit(chkObj) {
+					for (var chkHit = 0; chkHit < math_hit.length; chkHit++) {
+						eval("var chkObj = " + math_hit[chkHit] + ";");
+						if (chkObj != null && chkObj.getHit() == true) {
+							console.log(chkObj);
+						}
+				}
+
 				setInterval(function() {
-					//math_gravity 검사 후 eval 이용해서 중력 주기
-				}, 1000/60);
+					jump();
+					hit();
+				}, 1000/1);
 
 				function hitTest(ori, tar) {
 					var oriX, oriY, oriW, oriH, tarX, tarY, tarW, tarH, valTB = 0, valLR = 0;
@@ -99,6 +204,6 @@
 			}
 		</script>
 	</head>
-	<body>
+	<body oncontextmenu="return false" ondragstart="return false" onselectstart="return false">
 	</body>
 </html>
