@@ -4,41 +4,54 @@
 		<title> math </title>
 		<script>
 			window.onload = function() {
-				var math_hit = new Array(), math_gravity = new Array(), objs = new Array(), num = 0;
+				var math_hit = new Array(), math_gravity = new Array(), objs = new Array(), num = 0, calEnd = 1, calGra = 0, calHit = 0;
 
-				math_hit.push(new Array(0, 500, 500, 50));
-
-				var obj0 = new crt(50, 50, 50, 0.6, 'obj0');
-				obj0.setColor('gray');
-				obj0.setAlpha(0.5);
-				obj0.setPos(0,0);
-				obj0.setGravity(true);
-				obj0.setHit(true);
-				obj0.addParent(document.body);
+				var land = new crt('land');
+				land.setSize(500, 50);
+				land.setColor('gray');
+				land.setAlpha(0.5);
+				land.setPos(0,450);
+				land.setHit(true);
+				land.addParent(document.body);
 
 				window.onmousedown = makeNewObj;
 
 				function makeNewObj() {
-					objs[num] = new crt(50, 50, 50, 0.6, 'objs['+num+']');
-					objs[num].setColor('#' + Math.floor((Math.random()*899999 + 100000)));
-					objs[num].setAlpha(0.5);
+					objs[num] = new crt('objs['+num+']');
+					objs[num].setSize(25, 25);
+					objs[num].setWeight(25);
+					objs[num].setColor('#' + 505050);//Math.floor((Math.random()*899999 + 100000)));
+					objs[num].setAlpha(0.2);
 					objs[num].setPos(event.pageX, event.pageY);
 					objs[num].setGravity(true);
 					objs[num].setHit(true);
 					objs[num].addParent(document.body);
 					num++;
 				}
+				makeObjs();
+				function makeObjs() {
+					for (var i = 0; i < 20; i++) {
+					for (var j = 17; j < 20; j++) {
+					objs[num] = new crt('objs['+num+']');
+					objs[num].setSize(25, 25);
+					objs[num].setWeight(50);
+					objs[num].setColor('#' + 505050);//Math.floor((Math.random()*899999 + 100000)));
+					objs[num].setAlpha(0.2);
+					objs[num].setPos(i * 25, j * 25);
+					objs[num].setHit(true);
+					objs[num].addParent(document.body);
+					num++;
+					}
+					}
+				}
 
-				function crt(wd, hg, wt, bnd, id) {
+				function crt(id) {
 					this.obj = document.createElement('img');
 					this.obj.src = '';
-					this.obj.width = wd;
-					this.obj.height = hg;
-					this.obj.style.cssText += 'position: absolute;';
+					this.obj.style.cssText += 'position: absolute; background: #000000';
 					this.obj.id = id;
 					this.gravity = false;
-					this.bound = bnd;
-					this.weight = wt;
+					this.weight = 0;
 					this.powY = 0;
 					this.hit = false;
 
@@ -58,18 +71,18 @@
 						return this.obj.style.opacity;
 					}
 					
-					this.setPos = function(x, y) {
-						if (x != null || x != undefined)
-							this.obj.style.left = x + 'px';
-						if (y != null || y != undefined)
-							this.obj.style.top = y + 'px';
-					}
-					
 					this.addPos = function(x, y) {
 						if (x != null || x != undefined)
 							this.obj.style.left = parseInt(this.obj.style.left) + x + 'px';
 						if (y != null || y != undefined)
 							this.obj.style.top = parseInt(this.obj.style.top) + y + 'px';
+					}
+					
+					this.setPos = function(x, y) {
+						if (x != null || x != undefined)
+							this.obj.style.left = x + 'px';
+						if (y != null || y != undefined)
+							this.obj.style.top = y + 'px';
 					}
 					
 					this.getPos = function(x, y) {
@@ -99,6 +112,14 @@
 							returnValue += this.obj.height;
 						}
 						return returnValue;
+					}
+
+					this.setWeight = function(weight) {
+						this.weight = weight;
+					}
+
+					this.getWeight = function() {
+						return this.weight;
 					}
 
 					this.setGravity = function(gra) {
@@ -150,58 +171,96 @@
 					}
 				}
 
-				function jump() {
-					for (var chkGra = 0; chkGra < math_gravity.length; chkGra++) {
-						eval("var chkObj = " + math_gravity[chkGra] + ";");
-						if (chkObj != null && chkObj.getGravity() == true) {
-							chkObj.powY += Math.sqrt(chkObj.weight);
-							chkObj.addPos(null, chkObj.powY);
-							if (chkObj.getPos(0, 1) >= 450) {
-								chkObj.powY *= (-1 + (Math.sqrt(chkObj.weight) / (chkObj.weight))) * chkObj.bound;
-								chkObj.setPos(null, 450);
-							}
-						}
+				function cal() {
+					if (calEnd == 1) {
+						calEnd = 0;
+						calGra = 0;
+						calHit = 0;
+						jump();
+						hit();
+					}
+					if (calGra == 1 && calHit == 1) {
+						calEnd = 1;
+						calGra = 0;
+						calHit = 0;
+					}
 				}
 
-				function hit(chkObj) {
-					for (var chkHit = 0; chkHit < math_hit.length; chkHit++) {
-						eval("var chkObj = " + math_hit[chkHit] + ";");
-						if (chkObj != null && chkObj.getHit() == true) {
-							console.log(chkObj);
+				function jump() {
+					for (var i = 0; i < math_gravity.length; i++) {
+						eval("var chkObj_gra = " + math_gravity[i] + ";");
+						chkObj_gra.powY += (9.8 * chkObj_gra.weight * Math.abs(500 - chkObj_gra.getPos(0, 1))) / 250000;
+						chkObj_gra.addPos(null, chkObj_gra.powY);
+						//check
+						if (chkObj_gra.getPos(0, 1) >= 500) {
+							chkObj_gra.setPos(null, 0);
+							chkObj_gra.powY = 0;
 						}
+					}
+					calGra = 1;
+				}
+
+				function hit() {
+					for (var i = 0; i < math_hit.length - 1; i++) {
+						eval("var chkObj_hit_tar = " + math_hit[i] + ";");
+						for (var j = i + 1; j < math_hit.length; j++) {
+							eval("var chkObj_hit_ori = " + math_hit[j] + ";");
+							var hitValue = hitTest(chkObj_hit_ori, chkObj_hit_tar);
+							/*if (hitValue[1] == 1) {
+								chkObj_hit_ori.powY = 0;
+								chkObj_hit_ori.setPos(null, chkObj_hit_tar.getPos(0, 1) - chkObj_hit_ori.getSize(0, 1));
+							}*/
+							if (hitValue[0] != 0) {
+								chkObj_hit_ori.setAlpha(0.8);
+								chkObj_hit_tar.setAlpha(0.8);
+							} else if (hitValue[1] != 0) {
+								chkObj_hit_ori.setAlpha(0.8);
+								chkObj_hit_tar.setAlpha(0.8);
+							} 
+						}
+					}
+					calHit = 1;
 				}
 
 				setInterval(function() {
-					jump();
-					hit();
-				}, 1000/1);
+					cal();
+				}, 1000/60);
 
-				function hitTest(ori, tar) {
-					var oriX, oriY, oriW, oriH, tarX, tarY, tarW, tarH, valTB = 0, valLR = 0;
-					oriX = Number((ori.style.left).replace('px',''));
-					oriY = Number((ori.style.top).replace('px',''));
-					oriW = ori.width;
-					oriH = ori.height;
-					tarX = Number((tar.style.left).replace('px',''));
-					tarY = Number((tar.style.top).replace('px',''));
-					tarW = tar.width;
-					tarH = tar.height;
+				function hitTest(ori, tar) {//¾ÈµÅ;
+					var oriX, oriY, oriW, oriH, tarX, tarY, tarW, tarH, valTB = 0, valLR = 0, hitTx, hitTy;
 
-					if ((oriY >= tarY + hitT && oriY <= tarY + (tarH - hitT)) || (oriY + oriH >= tarY + hitT && oriY + oriH <= tarY + (tarH - hitT))) {
-						if (oriX + oriW >= tarX && oriX + oriW <= tarX + hitT)
+					oriX = ori.getPos(1, 0);
+					oriY = ori.getPos(0, 1);
+					oriW = ori.getSize(1, 0);
+					oriH = ori.getSize(0, 1);
+					tarX = tar.getPos(1, 0);
+					tarY = tar.getPos(0, 1);
+					tarW = tar.getSize(1, 0);
+					tarH = tar.getSize(0, 1);
+					hitTx = tarW / 4;
+					hitTy = tarH / 4;
+
+					if ((oriY >= tarY + hitTy && oriY <= tarY + (tarH - hitTy)) || (oriY + oriH >= tarY + hitTy && oriY + oriH <= tarY + (tarH - hitTy))) {
+						if (oriX + oriW >= tarX && oriX + oriW <= tarX + hitTx)
 							valLR = 1;
-						else if (oriX >= tarX + (tarW - hitT) && oriX <= tarX + tarW)
+						else if (oriX >= tarX + (tarW - hitTx) && oriX <= tarX + tarW)
 							valLR = 2;
 					}
-					if ((oriX >= tarX + hitT && oriX <= tarX + (tarW - hitT)) || (oriX + oriW >= tarX + hitT && oriX + oriW <= tarX + (tarW - hitT))) {
-						if (oriY + oriH >= tarY && oriY + oriH <= tarY + hitT)
+					if ((oriX >= tarX + hitTx && oriX <= tarX + (tarW - hitTx)) || (oriX + oriW >= tarX + hitTx && oriX + oriW <= tarX + (tarW - hitTx))) {
+						if (oriY + oriH >= tarY && oriY + oriH <= tarY + hitTy)
 							valTB = 1;
-						else if (oriY >= tarY + (tarH - hitT) && oriY <= tarY + tarH)
+						else if (oriY >= tarY + (tarH - hitTy) && oriY <= tarY + tarH)
 							valTB = 2;
 					}
-					return valLR + "/" + valTB;
+					return (valLR + "/" + valTB).split('/');
 				}
 			}
+
+
+
+
+
+//Æ®¸®¾ÆÁöX, ½Ã±Í
 		</script>
 	</head>
 	<body oncontextmenu="return false" ondragstart="return false" onselectstart="return false">
