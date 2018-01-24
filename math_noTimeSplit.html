@@ -4,7 +4,7 @@
 		<title> math </title>
 		<script>
 			window.onload = function() {
-				var math_hit = new Array(), math_gravity = new Array(), objs = new Array(), pasts = new Array(), num = 0, calEnd = 1, calGra = 0, calHit = 0, calHitCount = 0;
+				var math_hit = new Array(), math_gravity = new Array(), objs = new Array(), num = 0, calEnd = 1, calGra = 0, calHit = 0;
 
 				var land = new crt('land');
 				land.setSize(500, 50);
@@ -172,23 +172,12 @@
 				}
 
 				function cal() {
-					if (calEnd == 0 && calGra == 1 && calHit == 0) {
-						for (var i = 0; i < math_hit.length; i++) {
-							eval('var target = ' + math_hit[i] + ';');
-							target.addPos(pasts[0], pasts[1]);
-						}
-						calHitCount--;
-						if (calHitCount == 0)
-							calHit = 1;
-					}
 					if (calEnd == 1) {
 						calEnd = 0;
 						calGra = 0;
 						calHit = 0;
-						recordPast(0);
 						jump();
-						calHitCount = 10;
-						recordPast(1);
+						hit();
 					}
 					if (calGra == 1 && calHit == 1) {
 						calEnd = 1;
@@ -200,7 +189,7 @@
 				function jump() {
 					for (var i = 0; i < math_gravity.length; i++) {
 						eval("var chkObj_gra = " + math_gravity[i] + ";");
-						chkObj_gra.powY += (9.8 * chkObj_gra.weight * Math.abs(500 - chkObj_gra.getPos(0, 1))) / 250000;
+						chkObj_gra.powY += Math.ceil((9.8 * chkObj_gra.weight * Math.abs(500 - chkObj_gra.getPos(0, 1))) / 250000);
 						chkObj_gra.addPos(null, chkObj_gra.powY);
 						//check
 						/*if (chkObj_gra.getPos(0, 1) >= 500) {
@@ -209,23 +198,6 @@
 						}*/
 					}
 					calGra = 1;
-				}
-
-				function recordPast(st) {
-					if (st == 0) {
-						for (var i = 0; i < math_hit.length; i++){
-							eval('var target = ' + math_hit[i] + ';');
-							pasts.push(target.getPos(1, 1).split('/'));
-						}
-					} else {
-						for (var i = 0; i < math_hit.length; i++){
-							eval('var target = ' + math_hit[i] + ';');
-							var Ppast, Pnow;
-							Ppast = pasts[i];
-							Pnow = target.getPos(1, 1).split('/');
-							pasts.push((((Pnow[0] - Ppast[0])/calHitCount) + "/" + ((Pnow[1] - Ppast[1])/calHitCount)).split('/'));
-						}
-					}
 				}
 
 				function hit() {
@@ -263,7 +235,7 @@
 
 				setInterval(function() {
 					cal();
-				}, 1000/300);
+				}, 1000/30);
 
 				function hitTest(ori, tar) {
 					var oriX, oriY, oriW, oriH, tarX, tarY, tarW, tarH, valTB = 0, valLR = 0, hitTx, hitTy;
