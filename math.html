@@ -4,44 +4,84 @@
 		<title> math </title>
 		<script>
 			window.onload = function() {
-				var math_hit = new Array(), math_gravity = new Array(), objs = new Array(), pasts = new Array(), num = 0, calEnd = 1, calGra = 0, calHit = 0, calHitCount = 0;
+				var math_hit = [], math_gravity = [];
+				var objs = [], num = 0;
+				var calEnd = 1, calGra = 0, calHit = 0;
+				var mouseX, mouseY, mouseStatus = 1, tileXY = 25;
+
+				document.body.innerHTML += '<b>마우스</b><br/><b>왼쪽</b> : 중력 블럭 생성<br/><b>휠버튼</b> : 블럭 삭제<br/><b>오른쪽</b> : 블럭 생성';
 
 				var land = new crt('land');
 				land.setSize(500, 50);
 				land.setColor('gray');
-				land.setAlpha(0.5);
+				land.setAlpha(1);
 				land.setPos(0,450);
 				land.setHit(true);
 				land.addParent(document.body);
 
+				var mouse = new crt('mouse');
+				mouse.setSize(tileXY, tileXY);
+				mouse.setColor('green');
+				mouse.setAlpha(0.5);
+				mouse.setPos(0,0);
+				mouse.addParent(document.body);
+
 				window.onmousedown = makeNewObj;
+				window.onmousemove = calMousePos;
 
 				function makeNewObj() {
-					objs[num] = new crt('objs['+num+']');
-					objs[num].setSize(50, 50);
-					objs[num].setWeight(25);
-					objs[num].setColor('#009999');//Math.floor((Math.random()*899999 + 100000)));
-					objs[num].setAlpha(0.1);
-					objs[num].setPos(event.pageX, event.pageY);
-					objs[num].setGravity(true);
-					objs[num].setHit(true);
-					objs[num].addParent(document.body);
-					num++;
-				}
-				//makeObjs();
-				function makeObjs() {
-					for (var i = 0; i < 20; i++) {
-					for (var j = 17; j < 20; j++) {
-					objs[num] = new crt('objs['+num+']');
-					objs[num].setSize(25, 25);
-					objs[num].setWeight(50);
-					objs[num].setColor('#009900');//Math.floor((Math.random()*899999 + 100000)));
-					objs[num].setAlpha(0.1);
-					objs[num].setPos(i * 25, j * 25);
-					objs[num].setHit(true);
-					objs[num].addParent(document.body);
-					num++;
+					if (mouseStatus == 1) {
+						objs[num] = new crt('objs['+num+']');
+						objs[num].setSize(tileXY, tileXY);
+						objs[num].setWeight(25);
+						objs[num].setColor('#009999');//Math.floor((Math.random()*899999 + 100000)));
+						objs[num].setAlpha(1);
+						objs[num].setPos(mouseX, mouseY);
+						if (event.button == 0)
+							objs[num].setGravity(true);
+						objs[num].setHit(true);
+						objs[num].addParent(document.body);
+						num++;
 					}
+					if (mouseStatus == 0 && event.button == 1) {
+						for (var i = 0, len = math_hit.length; i < len; i++) {
+							eval("var chkObj_hit_tar = " + math_hit[i] + ";");
+							if (hitTest(mouse, chkObj_hit_tar)) {
+								chkObj_hit_tar.setGravity(false);
+								chkObj_hit_tar.setHit(false);
+								chkObj_hit_tar.removeParent(document.body);
+								chkObj_hit_tar = null;
+								i = math_hit.length;
+							}
+						}
+					}
+				}
+				
+				function calMousePos() {
+					mouseX = Math.round((event.pageX - tileXY/2)/tileXY) * tileXY;
+					mouseY = Math.round((event.pageY - tileXY/2)/tileXY) * tileXY;
+					mouse.setPos(mouseX, mouseY);
+					mouseHit();
+					mouse.removeParent(document.body);
+					mouse.addParent(document.body);
+				}
+
+				function mouseHit() {
+					var mouseBool = false;
+					for (var i = 0, len = math_hit.length; i < len; i++) {
+						eval("var chkObj_hit_tar = " + math_hit[i] + ";");
+						if (hitTest(mouse, chkObj_hit_tar)) {
+							mouseBool = true;
+							i = math_hit.length;
+						}
+					}
+
+					if (mouseBool) {
+						mouse.setColor('red');
+						mouseStatus = 0;
+					} else {
+						mouse.setColor('green');
+						mouseStatus = 1;
 					}
 				}
 
@@ -54,6 +94,8 @@
 					this.weight = 0;
 					this.powY = 0;
 					this.hit = false;
+					this.pastX = 0;
+					this.pastY = 0;
 
 					this.setColor = function(color) {
 						this.obj.style.cssText += 'background: ' + color + ';';
@@ -72,6 +114,8 @@
 					}
 					
 					this.addPos = function(x, y) {
+						this.pastX = parseInt(this.obj.style.left);
+						this.pastY = parseInt(this.obj.style.top);
 						if (x != null || x != undefined)
 							this.obj.style.left = parseInt(this.obj.style.left) + x + 'px';
 						if (y != null || y != undefined)
@@ -79,6 +123,8 @@
 					}
 					
 					this.setPos = function(x, y) {
+						this.pastX = parseInt(this.obj.style.left);
+						this.pastY = parseInt(this.obj.style.top);
 						if (x != null || x != undefined)
 							this.obj.style.left = x + 'px';
 						if (y != null || y != undefined)
@@ -95,6 +141,27 @@
 							returnValue += this.obj.style.top.replace("px", "");
 						}
 						return returnValue;
+					}
+
+					this.getMoveRotation = function() {
+						var movX, movY, movS, movR = '';// S : Speed, R : Rotate
+						movX = parseInt(this.obj.style.left) - this.pastX;
+						movY = parseInt(this.obj.style.top) - this.pastY;
+						if (movX != 0) {
+							if (movX > 0)
+								movR += 'R';
+							else if (movX < 0)
+								movR += 'L';
+						}
+
+						if (movY != 0) {
+							if (movY > 0)
+								movR += 'B';
+							else if (movY < 0)
+								movR += 'T';
+						}
+						movS = Math.sqrt(Math.pow(movX, 2) + Math.pow(movY, 2));
+						return (movR + '/' + movS).split('/');
 					}
 
 					this.setSize = function(wd, hg) {
@@ -127,7 +194,7 @@
 						if (gra == true)
 							math_gravity.push(this.obj.id);
 						else {
-							for (var i = 0; i < math_gravity.length; i++) {
+							for (var i = 0, len = math_gravity.length; i < len; i++) {
 								if (math_gravity[i] == this.obj.id) {
 									math_gravity.splice(i,1);
 									return;
@@ -145,7 +212,7 @@
 						if (ht == true)
 							math_hit.push(this.obj.id);
 						else {
-							for (var i = 0; i < math_hit.length; i++) {
+							for (var i = 0, len = math_hit.length; i < len; i++) {
 								if (math_hit[i] == this.obj.id) {
 									math_hit.splice(i,1);
 									return;
@@ -172,23 +239,12 @@
 				}
 
 				function cal() {
-					if (calEnd == 0 && calGra == 1 && calHit == 0) {
-						for (var i = 0; i < math_hit.length; i++) {
-							eval('var target = ' + math_hit[i] + ';');
-							target.addPos(pasts[0], pasts[1]);
-						}
-						calHitCount--;
-						if (calHitCount == 0)
-							calHit = 1;
-					}
 					if (calEnd == 1) {
 						calEnd = 0;
 						calGra = 0;
 						calHit = 0;
-						recordPast(0);
 						jump();
-						calHitCount = 10;
-						recordPast(1);
+						hit();
 					}
 					if (calGra == 1 && calHit == 1) {
 						calEnd = 1;
@@ -198,63 +254,37 @@
 				}
 
 				function jump() {
-					for (var i = 0; i < math_gravity.length; i++) {
+					for (var i = 0, len = math_gravity.length; i < len; i++) {
 						eval("var chkObj_gra = " + math_gravity[i] + ";");
-						chkObj_gra.powY += (9.8 * chkObj_gra.weight * Math.abs(500 - chkObj_gra.getPos(0, 1))) / 250000;
+						chkObj_gra.powY += Math.ceil((9.8 * chkObj_gra.weight * Math.abs(500 - chkObj_gra.getPos(0, 1))) / 250000);
 						chkObj_gra.addPos(null, chkObj_gra.powY);
-						//check
-						/*if (chkObj_gra.getPos(0, 1) >= 500) {
-							chkObj_gra.setPos(null, 0);
-							chkObj_gra.powY = 0;
-						}*/
 					}
 					calGra = 1;
 				}
 
-				function recordPast(st) {
-					if (st == 0) {
-						for (var i = 0; i < math_hit.length; i++){
-							eval('var target = ' + math_hit[i] + ';');
-							pasts.push(target.getPos(1, 1).split('/'));
-						}
-					} else {
-						for (var i = 0; i < math_hit.length; i++){
-							eval('var target = ' + math_hit[i] + ';');
-							var Ppast, Pnow;
-							Ppast = pasts[i];
-							Pnow = target.getPos(1, 1).split('/');
-							pasts.push((((Pnow[0] - Ppast[0])/calHitCount) + "/" + ((Pnow[1] - Ppast[1])/calHitCount)).split('/'));
-						}
-					}
-				}
-
 				function hit() {
-					for (var i = 0; i < math_hit.length - 1; i++) {
-						eval("var chkObj_hit_tar = " + math_hit[i] + ";");
-						for (var j = i + 1; j < math_hit.length; j++) {
-							eval("var chkObj_hit_ori = " + math_hit[j] + ";");
-							var hitValue = hitTest(chkObj_hit_ori, chkObj_hit_tar);
-							if (hitValue[0] == 1) {
-								chkObj_hit_ori.setPos(chkObj_hit_tar.getPos(1, 0) - chkObj_hit_ori.getSize(1, 0), null);
-							} else if (hitValue[0] == 2) {
-								chkObj_hit_ori.setPos(chkObj_hit_tar.getPos(0, 1) + chkObj_hit_tar.getSize(0, 1) ,null);
-							}
+					for (var i = 0, leni = math_hit.length - 1; i < leni; i++) {
+						eval("var chkObj_hit_ori = " + math_hit[i] + ";");
+						for (var j = i + 1, lenj = math_hit.length; j < lenj; j++) {
+							eval("var chkObj_hit_tar = " + math_hit[j] + ";");
 
-							if (hitValue[1] == 1) {
-								if (chkObj_hit_ori.powY > 0)
-									chkObj_hit_ori.powY = 0;
-								chkObj_hit_ori.setPos(null, chkObj_hit_tar.getPos(0, 1) - chkObj_hit_ori.getSize(0, 1));
-							} else if (hitValue[1] == 2) {
-								if (chkObj_hit_ori.powY < 0)
-									chkObj_hit_ori.powY = 0;
-								chkObj_hit_ori.setPos(null, chkObj_hit_tar.getPos(0, 1) + chkObj_hit_tar.getSize(0, 1));
-							}
-							if (hitValue[0] != 0) {
-								chkObj_hit_ori.setAlpha(0.8);
-								chkObj_hit_tar.setAlpha(0.8);
-							} else if (hitValue[1] != 0) {
-								chkObj_hit_ori.setAlpha(0.8);
-								chkObj_hit_tar.setAlpha(0.8);
+							if (hitTest(chkObj_hit_ori, chkObj_hit_tar)) {
+								var hitValue = chkObj_hit_tar.getMoveRotation(); //hitValue[1] 값은 이동속도 S = sqrt(X^2 + Y^2)
+								
+								if (hitValue[0].indexOf('R') != -1)
+									chkObj_hit_tar.setPos(chkObj_hit_ori.getPos(1, 0) - chkObj_hit_tar.getSize(1, 0), null);
+								else if (hitValue[0].indexOf('L') != -1)
+									chkObj_hit_tar.setPos(chkObj_hit_ori.getPos(1, 0) + chkObj_hit_tar.getSize(1, 0), null);
+
+								if (hitValue[0].indexOf('B') != -1) {
+									if (chkObj_hit_tar.powY > 0)
+										chkObj_hit_tar.powY = 0;
+									chkObj_hit_tar.setPos(null, chkObj_hit_ori.getPos(0, 1) - chkObj_hit_tar.getSize(0, 1));
+								} else if (hitValue[0].indexOf('T') != -1) {
+									if (chkObj_hit_tar.powY < 0)
+										chkObj_hit_tar.powY = 0;
+									chkObj_hit_tar.setPos(null, chkObj_hit_ori.getPos(0, 1) + chkObj_hit_tar.getSize(0, 1));
+								}
 							}
 						}
 					}
@@ -263,10 +293,10 @@
 
 				setInterval(function() {
 					cal();
-				}, 1000/300);
+				}, 1000/30);
 
 				function hitTest(ori, tar) {
-					var oriX, oriY, oriW, oriH, tarX, tarY, tarW, tarH, valTB = 0, valLR = 0, hitTx, hitTy;
+					var oriX, oriY, oriW, oriH, tarX, tarY, tarW, tarH;
 
 					oriX = parseInt(ori.getPos(1, 0));
 					oriY = parseInt(ori.getPos(0, 1));
@@ -276,24 +306,11 @@
 					tarY = parseInt(tar.getPos(0, 1));
 					tarW = parseInt(tar.getSize(1, 0));
 					tarH = parseInt(tar.getSize(0, 1));
-					hitOx = oriW / 5;
-					hitOy = oriH / 5;
-					hitTx = tarW / 5;
-					hitTy = tarH / 5;
 
-					if (((oriY >= tarY && oriY <= tarY + (tarH - hitTy)) || (oriY + oriH >= tarY + hitTy && oriY + oriH <= tarY + tarH)) || ((tarY >= oriY && tarY <= oriY + (oriH - hitOy)) || (tarY + tarH >= oriY + hitOy && tarY + tarH <= oriY + oriH))) {
-						if ((oriX + oriW >= tarX && oriX + oriW <= tarX + hitTx) || (tarX + tarW >= oriX && tarX + tarW <= oriX + hitOx))
-							valLR = 1;
-						else if ((oriX >= tarX + (tarW - hitTx) && oriX <= tarX + tarW) || (tarX >= oriX + (oriW - hitOx) && tarX <= oriX + oriW))
-							valLR = 2;
-					}
-					if ((oriX >= tarX && oriX <= tarX + (tarW - hitTx)) || (oriX + oriW >= tarX + hitTx && oriX + oriW <= tarX + tarW)) {
-						if ((oriY + oriH >= tarY && oriY + oriH <= tarY + hitTy) || (tarY + tarH >= oriY && tarY + tarH <= oriY + hitOy))
-							valTB = 1;
-						else if ((oriY >= tarY + (tarH - hitTy) && oriY <= tarY + tarH) || (tarY >= oriY + (oriH - hitOy) && tarY <= oriY + oriH))
-							valTB = 2;
-					}
-					return (valLR + "/" + valTB).split('/');
+					if ((oriX + oriW > tarX && oriX < tarX + tarW) && (oriY + oriH > tarY && oriY < tarY + tarH))
+						return true;
+
+					return false;
 				}
 			}
 
