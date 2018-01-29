@@ -4,12 +4,19 @@
 		<title> math </title>
 		<script>
 			window.onload = function() {
+				//bounce_ball LRTB range hitTest gogo
+				//if block delete, array index value != object id value, then maybe hitTest error, fix plz
+				var gView;
 				var math_hit = [], math_gravity = [];
 				var objs = [], num = 0;
 				var calEnd = 1, calGra = 0, calHit = 0;
-				var mouseX, mouseY, mouseStatus = 1, tileXY = 25;
+				var mouseX, mouseY, mouseStatus = 1, tileXY = 50;
 
 				document.body.innerHTML += '<b>마우스</b><br/><b>왼쪽</b> : 중력 블럭 생성<br/><b>휠버튼</b> : 블럭 삭제<br/><b>오른쪽</b> : 블럭 생성';
+
+				gView = document.createElement('div');
+				gView.id = 'gView';
+				document.body.appendChild(gView);
 
 				var land = new crt('land');
 				land.setSize(500, 50);
@@ -17,7 +24,8 @@
 				land.setAlpha(1);
 				land.setPos(0,450);
 				land.setHit(true);
-				land.addParent(document.body);
+				land.addParent(gView);
+				land.draw();
 
 				var mouse = new crt('mouse');
 				mouse.setSize(tileXY, tileXY);
@@ -25,23 +33,44 @@
 				mouse.setAlpha(0.5);
 				mouse.setPos(0,0);
 				mouse.addParent(document.body);
+				mouse.draw();
 
 				window.onmousedown = makeNewObj;
 				window.onmousemove = calMousePos;
 
 				function makeNewObj() {
-					if (mouseStatus == 1) {
-						objs[num] = new crt('objs['+num+']');
-						objs[num].setSize(tileXY, tileXY);
-						objs[num].setWeight(25);
-						objs[num].setColor('#009999');//Math.floor((Math.random()*899999 + 100000)));
-						objs[num].setAlpha(1);
-						objs[num].setPos(mouseX, mouseY);
+					if (mouseStatus == 1 && event.button != 1) {
+						/*objs[num] = new crt('objs['+num+']');
+						var temp = objs[num];
+						temp.setSize(tileXY, tileXY);
+						temp.setWeight(25);
+						temp.setColor('#009999');//Math.floor((Math.random()*899999 + 100000)));
+						temp.setAlpha(1);
+						temp.setPos(mouseX, mouseY);
 						if (event.button == 0)
-							objs[num].setGravity(true);
-						objs[num].setHit(true);
-						objs[num].addParent(document.body);
-						num++;
+							temp.setGravity(true);
+						temp.setHit(true);
+						temp.addParent(gView);
+						temp.draw();
+						num++;*/
+
+						for (var i = -1; i < 2; i++) {
+							for (var j = -1; j < 2; j++) {
+								objs[num] = new crt('objs['+num+']');
+								var temp = objs[num];
+								temp.setSize(tileXY, tileXY);
+								temp.setWeight(25);
+								temp.setColor('#009999');//Math.floor((Math.random()*899999 + 100000)));
+								temp.setAlpha(1);
+								temp.setPos(mouseX + i * tileXY, mouseY + j * tileXY);
+								if (event.button == 0)
+									temp.setGravity(true);
+								temp.setHit(true);
+								temp.addParent(gView);
+								temp.draw();
+								num++;
+							}
+						}
 					}
 					if (mouseStatus == 0 && event.button == 1) {
 						for (var i = 0, len = math_hit.length; i < len; i++) {
@@ -49,7 +78,7 @@
 							if (hitTest(mouse, chkObj_hit_tar)) {
 								chkObj_hit_tar.setGravity(false);
 								chkObj_hit_tar.setHit(false);
-								chkObj_hit_tar.removeParent(document.body);
+								chkObj_hit_tar.removeParent(gView);
 								chkObj_hit_tar = null;
 								i = math_hit.length;
 							}
@@ -60,10 +89,13 @@
 				function calMousePos() {
 					mouseX = Math.round((event.pageX - tileXY/2)/tileXY) * tileXY;
 					mouseY = Math.round((event.pageY - tileXY/2)/tileXY) * tileXY;
-					mouse.setPos(mouseX, mouseY);
-					mouseHit();
-					mouse.removeParent(document.body);
-					mouse.addParent(document.body);
+					if (mouseX != mouse.objX || mouseY != mouse.objY) {
+						mouse.setPos(mouseX, mouseY);
+						mouseHit();
+						mouse.removeParent(document.body);
+						mouse.draw();
+						mouse.addParent(document.body);
+					}
 				}
 
 				function mouseHit() {
@@ -87,66 +119,81 @@
 
 				function crt(id) {
 					this.obj = document.createElement('img');
-					this.obj.src = '';
+					this.src = '';
 					this.obj.style.cssText += 'position: absolute; background: #000000;';
 					this.obj.id = id;
+
+					this.objX = -1;
+					this.objY = -1;
+					this.objW = -1;
+					this.objH = -1;
+					this.objColor = 'black';
+					this.objAlpha = 1;
+
 					this.gravity = false;
-					this.weight = 0;
-					this.powY = 0;
+					this.weight = -1;
+					this.powY = -1;
+
 					this.hit = false;
 					this.pastX = 0;
 					this.pastY = 0;
+					this.pastW = 0;
+					this.pastH = 0;
+					this.pastColor = 'black';
+					this.pastAlpha = 1;
 
 					this.setColor = function(color) {
-						this.obj.style.cssText += 'background: ' + color + ';';
+						this.pastColor = this.objColor;
+						this.objColor = color;
 					}
 
 					this.getColor = function() {
-						return this.obj.style.backgroundColor;
+						return this.objColor;
 					}
 
 					this.setAlpha = function(alpha) {
-						this.obj.style.cssText += 'opacity: ' + alpha + ';';
+						this.pastAlpha = this.objAlpha;
+						this.objAlpha = alpha;
 					}
 
 					this.getAlpha = function() {
-						return this.obj.style.opacity;
+						return this.objAlpha;
 					}
 					
 					this.addPos = function(x, y) {
-						this.pastX = parseInt(this.obj.style.left);
-						this.pastY = parseInt(this.obj.style.top);
+						this.pastX = this.objX;
+						this.pastY = this.objY;
 						if (x != null || x != undefined)
-							this.obj.style.left = parseInt(this.obj.style.left) + x + 'px';
+							this.objX += x;
 						if (y != null || y != undefined)
-							this.obj.style.top = parseInt(this.obj.style.top) + y + 'px';
+							this.objY += y;
 					}
 					
 					this.setPos = function(x, y) {
-						this.pastX = parseInt(this.obj.style.left);
-						this.pastY = parseInt(this.obj.style.top);
+						this.pastX = this.objX;
+						this.pastY = this.objY;
 						if (x != null || x != undefined)
-							this.obj.style.left = x + 'px';
+							this.objX = x;
 						if (y != null || y != undefined)
-							this.obj.style.top = y + 'px';
+							this.objY = y;
 					}
 					
 					this.getPos = function(x, y) {
 						var returnValue = "";
 						if (x == 1)
-							returnValue += this.obj.style.left.replace("px", "");
+							returnValue += this.objX;
 						if (y == 1) {
 							if (x == 1)
 								returnValue += "/";
-							returnValue += this.obj.style.top.replace("px", "");
+							returnValue += this.objY;
 						}
 						return returnValue;
 					}
 
 					this.getMoveRotation = function() {
 						var movX, movY, movS, movR = '';// S : Speed, R : Rotate
-						movX = parseInt(this.obj.style.left) - this.pastX;
-						movY = parseInt(this.obj.style.top) - this.pastY;
+						movX = this.objX - this.pastX;
+						movY = this.objY - this.pastY;
 						if (movX != 0) {
 							if (movX > 0)
 								movR += 'R';
@@ -160,23 +207,25 @@
 							else if (movY < 0)
 								movR += 'T';
 						}
-						movS = Math.sqrt(Math.pow(movX, 2) + Math.pow(movY, 2));
+						movS = movX * movX + movY * movY;
 						return (movR + '/' + movS).split('/');
 					}
 
 					this.setSize = function(wd, hg) {
-						this.obj.width = wd;
-						this.obj.height = hg;
+						this.pastW = this.objW;
+						this.pastH = this.objH;
+						this.objW = wd;
+						this.objH = hg;
 					}
 
 					this.getSize = function(wd, hg) {
 						var returnValue = "";
 						if (wd == 1)
-							returnValue += this.obj.width;
+							returnValue += this.objW;
 						if (hg == 1) {
 							if (wd == 1)
 								returnValue += "/";
-							returnValue += this.obj.height;
+							returnValue += this.objH;
 						}
 						return returnValue;
 					}
@@ -233,8 +282,29 @@
 						parent.removeChild(this.obj);
 					}
 
-					this.print = function() {
-						console.log(this.obj);
+					this.draw = function() {
+						if ((this.objX != this.pastX) || (this.objY != this.pastY) || (this.objW != this.pastW) || (this.objH != this.pastH) || (this.objColor != this.pastColor) || (this.objAlpha != this.pastAlpha)) {
+							var objS = this.obj.style, cssT = '';
+							objS.visibility = 'hidden';
+							if (this.objW != this.pastW)
+								this.obj.width = this.objW;
+							if (this.objH != this.pastH)
+								this.obj.height = this.objH;
+
+							if (this.objX != this.pastX)
+								cssT += 'left: ' + this.objX + 'px;';
+							if (this.objY != this.pastY)
+								cssT += 'top: ' + this.objY + 'px;';
+
+							if (this.objColor != this.pastColor)
+								cssT += 'background: ' + this.objColor + ';';
+							if (this.objAlpha != this.pastAlpha)
+								cssT += 'opacity: ' + this.objAlpha + ';';
+							objS.cssText +=  cssT;
+							objS.visibility = 'visible';
+							return true;
+						}
+						return false;
 					}
 				}
 
@@ -247,6 +317,9 @@
 						hit();
 					}
 					if (calGra == 1 && calHit == 1) {
+						var gView_objects = gView.children;
+						for (var i = 0, len = gView_objects.length; i < len; i++)
+							eval(gView_objects[i].id + ".draw();");
 						calEnd = 1;
 						calGra = 0;
 						calHit = 0;
@@ -256,8 +329,12 @@
 				function jump() {
 					for (var i = 0, len = math_gravity.length; i < len; i++) {
 						eval("var chkObj_gra = " + math_gravity[i] + ";");
-						chkObj_gra.powY += Math.ceil((9.8 * chkObj_gra.weight * Math.abs(500 - chkObj_gra.getPos(0, 1))) / 250000);
+						var mth = 500 - chkObj_gra.getPos(0, 1);
+						var objspd = (9.8 * chkObj_gra.weight * (mth > 0 ? mth : -mth)) / 250000;
+						chkObj_gra.powY += (0 < objspd && objspd < 1 ? 1 : objspd);
 						chkObj_gra.addPos(null, chkObj_gra.powY);
+						if (chkObj_gra.getPos(0, 1) > 500)
+							chkObj_gra.setPos(null, 0);
 					}
 					calGra = 1;
 				}
@@ -269,7 +346,7 @@
 							eval("var chkObj_hit_tar = " + math_hit[j] + ";");
 
 							if (hitTest(chkObj_hit_ori, chkObj_hit_tar)) {
-								var hitValue = chkObj_hit_tar.getMoveRotation(); //hitValue[1] 값은 이동속도 S = sqrt(X^2 + Y^2)
+								var hitValue = chkObj_hit_tar.getMoveRotation(); //hitValue[1] 값은 이동속도
 								
 								if (hitValue[0].indexOf('R') != -1)
 									chkObj_hit_tar.setPos(chkObj_hit_ori.getPos(1, 0) - chkObj_hit_tar.getSize(1, 0), null);
