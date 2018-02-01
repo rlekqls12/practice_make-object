@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<title> 3D </title>
+		<script>
+			var keys = [], canvas, ctx;//, sX = 0, sY = 0;
+			window.onkeyup = function() {
+				var key = event.key;
+				if (keys.indexOf(key) != -1)
+					for (var i = 0, len = keys.length; i < len; i++) {
+						if (keys[i] == key) {
+							keys.splice(i, 1);
+							return;
+						}
+					}
+			}
+
+			window.onkeydown = function() {
+				var key = event.key;
+				if (keys.indexOf(key) == -1)
+					keys.push(key);
+			}
+
+			/*
+			function obj(){
+				this.x = 0;
+				this.y = 0;
+				this.sX = 0;
+				this.sY = 0;
+				this.w = 0;
+				this.h = 0;
+				this.ele = document.createElement('img');
+				this.ele.src = '';
+				this.ele.width = this.w;
+				this.ele.height = this.h;
+				this.ele.style.cssText = 'background: #000000; position: absolute; left: ' + this.x +'px; top:'  + this.y + 'px; transform-origin: 50% 50%; transform: skew(' + this.sX + 'deg,'  + this.sY + 'deg);';
+				document.body.appendChild(this.ele);
+
+				this.setVar = function(x, y, w, h, sx, sy) {
+					if (x != undefined)
+						this.x = x;
+					if (y != undefined)
+						this.y = y;
+					if (w != undefined)
+						this.w = w;
+					if (h != undefined)
+						this.h = h;
+					if (sX != undefined)
+						this.sX = sX;
+					if (sY != undefined)
+						this.sY = sY;
+				}
+
+				this.draw = function() {
+					this.ele.width = this.w;
+					this.ele.height = this.h;
+					this.ele.style.cssText = 'background: #000000; position: absolute; left: ' + this.x +'px; top:'  + this.y + 'px; transform-origin: 50% 50%; transform: skew(' + this.sX + 'deg,'  + this.sY + 'deg);';
+				}
+			}*/
+
+			window.onload = function() {
+				/*
+				obj = document.createElement('img');
+				obj.src = '';
+				obj.width = obj.height = 50;
+				obj.style.cssText = 'background: #000000; position: absolute; left: 50px; top: 50px; transform-origin: 50% 50%; transform: skew(0deg, 0deg);';
+				document.body.appendChild(obj);
+				
+				setInterval(function() {
+					if (keys.indexOf('a') != -1) {
+						sX += 1;
+						obj.style.cssText += 'transform: skew(' + sX + 'deg, ' + sY + 'deg);';
+					}
+					else if (keys.indexOf('d') != -1) {
+						sX -= 1;
+						obj.style.cssText += 'transform: skew(' + sX + 'deg, ' + sY + 'deg);';
+					}
+
+					if (keys.indexOf('w') != -1) {
+						sY += 1;
+						obj.style.cssText += 'transform: skew(' + sX + 'deg, ' + sY + 'deg);';
+					}
+					else if (keys.indexOf('s') != -1) {
+						sY -= 1;
+						obj.style.cssText += 'transform: skew(' + sX + 'deg, ' + sY + 'deg);';
+					}
+				}, 1000/30);
+				*/
+				
+				canvas = document.createElement('canvas');
+				canvas.width = canvas.height = 400;
+				canvas.style.border = 'black 1px solid';
+
+				ctx = canvas.getContext('2d');
+
+				ctx.save();
+
+				ctx.fillStyle = 'green';
+				ctx.fillRect(50, 50, 100, 100);
+
+				ctx.restore();
+				ctx.save();
+
+				ctx.fillStyle = 'green';
+				ctx.fillRect(150, 150, 100, 100);
+				ctx.restore();
+
+				document.body.appendChild(canvas);
+			}
+		</script>
+	</head>
+	<body>
+
+	</body>
+</html>
