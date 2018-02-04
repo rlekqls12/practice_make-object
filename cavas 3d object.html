@@ -3,7 +3,8 @@
 	<head>
 		<title> 3D </title>
 		<script>
-			var keys = [], canvas, ctx;//, sX = 0, sY = 0;
+			var keys = [], canvas, ctx;
+
 			window.onkeyup = function() {
 				var key = event.key;
 				if (keys.indexOf(key) != -1)
@@ -21,95 +22,64 @@
 					keys.push(key);
 			}
 
-			/*
-			function obj(){
-				this.x = 0;
-				this.y = 0;
-				this.sX = 0;
-				this.sY = 0;
-				this.w = 0;
-				this.h = 0;
-				this.ele = document.createElement('img');
-				this.ele.src = '';
-				this.ele.width = this.w;
-				this.ele.height = this.h;
-				this.ele.style.cssText = 'background: #000000; position: absolute; left: ' + this.x +'px; top:'  + this.y + 'px; transform-origin: 50% 50%; transform: skew(' + this.sX + 'deg,'  + this.sY + 'deg);';
-				document.body.appendChild(this.ele);
-
-				this.setVar = function(x, y, w, h, sx, sy) {
-					if (x != undefined)
-						this.x = x;
-					if (y != undefined)
-						this.y = y;
-					if (w != undefined)
-						this.w = w;
-					if (h != undefined)
-						this.h = h;
-					if (sX != undefined)
-						this.sX = sX;
-					if (sY != undefined)
-						this.sY = sY;
-				}
-
-				this.draw = function() {
-					this.ele.width = this.w;
-					this.ele.height = this.h;
-					this.ele.style.cssText = 'background: #000000; position: absolute; left: ' + this.x +'px; top:'  + this.y + 'px; transform-origin: 50% 50%; transform: skew(' + this.sX + 'deg,'  + this.sY + 'deg);';
-				}
-			}*/
+			window.onresize = function() {
+				canvas.style.cssText += 'left: ' + (window.innerWidth/2 - 251) + 'px; top: ' + (window.innerHeight/2 - 251) + 'px;';
+			}
 
 			window.onload = function() {
-				/*
-				obj = document.createElement('img');
-				obj.src = '';
-				obj.width = obj.height = 50;
-				obj.style.cssText = 'background: #000000; position: absolute; left: 50px; top: 50px; transform-origin: 50% 50%; transform: skew(0deg, 0deg);';
-				document.body.appendChild(obj);
-				
-				setInterval(function() {
-					if (keys.indexOf('a') != -1) {
-						sX += 1;
-						obj.style.cssText += 'transform: skew(' + sX + 'deg, ' + sY + 'deg);';
-					}
-					else if (keys.indexOf('d') != -1) {
-						sX -= 1;
-						obj.style.cssText += 'transform: skew(' + sX + 'deg, ' + sY + 'deg);';
-					}
-
-					if (keys.indexOf('w') != -1) {
-						sY += 1;
-						obj.style.cssText += 'transform: skew(' + sX + 'deg, ' + sY + 'deg);';
-					}
-					else if (keys.indexOf('s') != -1) {
-						sY -= 1;
-						obj.style.cssText += 'transform: skew(' + sX + 'deg, ' + sY + 'deg);';
-					}
-				}, 1000/30);
-				*/
-				
 				canvas = document.createElement('canvas');
-				canvas.width = canvas.height = 400;
-				canvas.style.border = 'black 1px solid';
+				canvas.width = canvas.height = 500;
+				canvas.style.cssText = 'border: green 1px solid; position: absolute; background-color: #fff; left: ' + (window.innerWidth/2 - 251) + 'px; top: ' + (window.innerHeight/2 - 251) + 'px;';
+				document.body.appendChild(canvas);
 
 				ctx = canvas.getContext('2d');
+				var a = new Game();
+				a.Init();
+			}
 
-				ctx.save();
+			function Game() {
+				// 기본 변수
+				let camera = {x: canvas.width/2, y: canvas.height/2, z: -25, w: canvas.width, h: canvas.height, z: 1, rX: 0, rY: 0, sX: 1, sY: 1, sZ: 1};
+				let box_sprite_arr = [[0,1,2,3],[4,5,6,7],[4,5,1,0],[7,6,2,3],[0,4,7,3],[1,5,6,2]];//앞 뒤 위 아래 왼 오
+				
+				// 객체 변수
+				let box_1 = {x: 150, y: 150, z: 0, w: 25, h: 25, v: 25, rX: 0, rY: 0, sX: 1, sY: 1, sZ: 1, color: 'green', sprite: []};
 
-				ctx.fillStyle = 'green';
-				ctx.fillRect(50, 50, 100, 100);
+				this.settingBox = function(box) {
+					//A B C D E F G H
+					box.sprite[0] = [box.x - box.w, box.y - box.h, box.z - box.v];
+					box.sprite[1] = [box.x + box.w, box.y - box.h, box.z - box.v];
+					box.sprite[2] = [box.x + box.w, box.y + box.h, box.z - box.v];
+					box.sprite[3] = [box.x - box.w, box.y + box.h, box.z - box.v];
+					box.sprite[4] = [box.x - box.w, box.y - box.h, box.z + box.v];
+					box.sprite[5] = [box.x + box.w, box.y - box.h, box.z + box.v];
+					box.sprite[6] = [box.x + box.w, box.y + box.h, box.z + box.v];
+					box.sprite[7] = [box.x - box.w, box.y + box.h, box.z + box.v];
+				}
 
-				ctx.restore();
-				ctx.save();
+				this.drawBox = function(box) {
+					if (box.sprite.length != 8) {
+						console.log(box);
+						console.log('errMsg : 위 객체는 obj_box 형식이 아닙니다. [sprite.length < 8]');
+					} else {
+						let spr = box.sprite;
+						for (var i = 0; i < 6; i++) {
+							let arr = box_sprite_arr[i];
 
-				ctx.fillStyle = 'green';
-				ctx.fillRect(150, 150, 100, 100);
-				ctx.restore();
+							ctx.beginPath();
+							ctx.moveTo(spr[arr[0]][0], spr[arr[0]][1]);
+						}
+					}
+				}
 
-				document.body.appendChild(canvas);
+				this.Init = function() {	
+					this.settingBox(box_1);
+					this.drawBox(box_1);
+				}
 			}
 		</script>
 	</head>
-	<body>
+	<body bgcolor='black'>
 
 	</body>
 </html>
